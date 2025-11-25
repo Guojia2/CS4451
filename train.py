@@ -1,12 +1,12 @@
 import torch
 from colorama import Fore
 from model import FredF
-from dataloader import get_train_dataloader, get_val_dataloader
+from utils.dataloader import get_train_dataloader, get_val_dataloader
 from typing import Callable
 from torch.utils.data import DataLoader
 from torch.optim import Optimizer
 from torch import Tensor
-from losses import fourier_mse_loss
+from utils.losses import fourier_mse_loss
 
 """
 Train a full epoch of the FredF model

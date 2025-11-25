@@ -1,4 +1,6 @@
 import torch
+import torch.nn.functional as F
+
 def fourier_loss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
     """
     Compute the Fourier Loss between predictions and targets
@@ -44,7 +46,22 @@ def fourier_mse_loss(pred: torch.Tensor, target: torch.Tensor, fourier_weight: f
     assert pred.shape == target.shape, "Prediction and target shapes must match"
     assert pred.dim() == 3, "Pred and target must be 3D tensors of shape (batches, covariates, forecast_horizon)"
 
-    mse_loss = torch.nn.functional.mse_loss(pred, target)
+    mse_loss = F.mse_loss(pred, target)
     f_loss = fourier_loss(pred, target)
     total_loss = (1 - fourier_weight) * mse_loss + fourier_weight * f_loss
     return total_loss
+
+
+# weighted fourier + MAE loss between inputs and labels. Same args as above.
+def fourier_mae_loss(pred: torch.Tensor, target: torch.Tensor, fourier_weight: float) -> torch.Tensor:
+
+    assert 0.0 <= fourier_weight <= 1.0, "fourier_weight must be between 0 and 1.0"
+    assert pred.shape == target.shape, "Prediction and target shapes must match"
+    assert pred.dim() == 3, "Pred and target must be 3D tensors of shape (batches, covariates, forecast_horizon)"
+
+    mae_loss = F.l1_loss(pred, target)
+    f_loss = fourier_loss(pred, target)
+    total_loss = (1 - fourier_weight) * mae_loss + fourier_weight * f_loss
+    return total_loss
+
+ 
