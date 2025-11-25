@@ -13,19 +13,26 @@ This repo contains the FreDF paper implementation for improving upon Direct Fore
 
 File Tree: 
 ```
-
-├── main.py
-├── train.py
+├── main.py 
+├── train.py # old code for training 
 ├── model.py # old code for FreDF model
-├── models
-│   ├── iTransformer.py
-│   ├── autoFormer.py
+├── models # folder for all the models 
+│   ├── __init__.py  
+│   ├── iTransformer 
+│   │   ├── __init__.py
+│   │   ├── Embed.py
+│   │   ├── model.py
+│   │   ├── SelfAttention_Family.py
+│   │   ├── Transformer_EncDec.py
+│   ├── autoFormer.py # will turn into folders if needed.
 │   ├── scaleFormer.py
 │   ├── patchTST.py
 │   ├── timeMixer.py
 │   └── DLinear.py 
-├── utils 
-│   ├── layers.py # nn.Module definitions for FFT layers 
+├── trains # contains code for training the models 
+│   ├── train.py # example train file copied from old code  
+├── utils # utils folder for functions and modules 
+│   ├── fft-layer.py # nn.Module definition for FFT layer
 │   ├── inverse-fft.py # convert output labels back from frequency domain
 │   ├── dataloader.py # dataloader definitions 
 │   ├── test_dataloader.py # used for testing dataloader class
