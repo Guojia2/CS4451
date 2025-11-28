@@ -1,6 +1,10 @@
+import inspect
+from typing import Any, Dict
+
 import torch
 from torch import nn
-from torch.utils.data import DataLoader
+
+from models import TSMixer
 
 class ITransformerLayer(nn.Module):
     """
@@ -51,3 +55,54 @@ class FredF(nn.Module):
 
         
         return logits
+
+
+        MODEL_REGISTRY = {
+            "fredf": FredF,
+            "tsmixer": TSMixer,
+        }
+
+
+        def _normalize_kwargs(model_key: str, model_kwargs: Dict[str, Any]) -> Dict[str, Any]:
+            normalized = dict(model_kwargs)
+            if model_key == "fredf":
+                alias_map = {
+                    "seq_len": "lookback_window",
+                    "pred_len": "forecast_horizon",
+                    "enc_in": "covariates",
+                    "dec_in": "covariates",
+                }
+                for alias, target in alias_map.items():
+                    if alias in normalized and target not in normalized:
+                        normalized[target] = normalized[alias]
+            return normalized
+
+
+        def build_model(model_name: str, **model_kwargs: Any) -> nn.Module:
+            """Constructs a model from the registry using normalized kwargs."""
+
+            if not model_name:
+                raise ValueError("model_name must be a non-empty string")
+
+            model_key = model_name.lower()
+            if model_key not in MODEL_REGISTRY:
+                raise ValueError(f"Unknown model '{model_name}'. Available: {list(MODEL_REGISTRY)}")
+
+            model_cls = MODEL_REGISTRY[model_key]
+            normalized_kwargs = _normalize_kwargs(model_key, model_kwargs)
+
+            signature = inspect.signature(model_cls)
+            supports_var_kw = any(
+                param.kind == inspect.Parameter.VAR_KEYWORD for param in signature.parameters.values()
+            )
+
+            if supports_var_kw:
+                ctor_kwargs = normalized_kwargs
+            else:
+                ctor_kwargs = {
+                    name: normalized_kwargs[name]
+                    for name in signature.parameters.keys()
+                    if name in normalized_kwargs
+                }
+
+            return model_cls(**ctor_kwargs)
