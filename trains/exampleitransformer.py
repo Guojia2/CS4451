@@ -22,14 +22,16 @@ def train_one_epoch(model, train_loader, optimizer, criterion, fft_layer, device
         batch_x = batch_x.to(device)
         batch_y = batch_y.to(device) # batch_y is time domain 
 
-        # get model prediction NOTE: model() returns 2 values when output_attention=True, and 1 when output_attention=False. 
+        # get model prediction,  NOTE: model() returns 2 values when output_attention=True, and 1 when output_attention=False. 
         y_hat_freq, _ = model(batch_x, None, None, None)
+        output = model(batch_x, None, None, None)
+        y_hat_freq = output[0] if isinstance(output, tuple) else output
 
-        y_acc = batch_y
+        y_target = batch_y
         if fft_layer:
-            y_acc = fft_layer(batch_y)
+            y_target = fft_layer(batch_y)
 
-        loss = criterion(y_hat_freq, y_acc)
+        loss = criterion(y_hat_freq, y_target)
 
         optimizer.zero_grad()
         loss.backward()
@@ -51,14 +53,15 @@ def validate(model, val_loader, criterion, fft_layer, device):
             batch_x = batch_x.to(device)
             batch_y = batch_y.to(device)
 
-            y_hat_freq, _ = model(batch_x, None, None, None)
+            output = model(batch_x, None, None, None)
+            y_hat_freq = output[0] if isinstance(output, tuple) else output 
             
-            y_acc = batch_y 
+            y_target = batch_y 
 
             if fft_layer: # if there is a fft layer passed in 
-                y_acc = fft_layer(batch_y)
+                y_target = fft_layer(batch_y)
             
-            loss = criterion(y_hat_freq, y_acc)
+            loss = criterion(y_hat_freq, y_target)
             total_loss += loss.item()
 
     return total_loss / len(val_loader)
@@ -106,7 +109,7 @@ def train():
 
     if configs.use_gpu and torch.cuda.is_available():
         device = torch.device("cuda")
-        print(f"{Fore.GREEN}Using GPU: {torch.cuda.get_device_name(configs.gpu_id)}{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}Using GPU: {torch.cuda.get_device_name(0)}{Style.RESET_ALL}")
     else:
         device = torch.device("cpu")
         print(f"{Fore.YELLOW}Using CPU{Style.RESET_ALL}")
@@ -125,16 +128,15 @@ def train():
 
     optimizer = optim.Adam(model.parameters(), lr=configs.learning_rate)
     
-    fft_layer = None
-    # Use a standard loss by default
+    fft_layer = None # NOTE: make this None if no FreDF
+
+    # NOTE: just explicitly do fourier_mse_loss() if your model is FreDF. If not, use a non FFT loss.
     criterion = nn.MSELoss()
-    # Conditionally set up for frequency domain training
     if configs.output_transformation == 'freq':
         # Use a lambda to wrap the criterion with its fourier_weight argument
         criterion = lambda pred, target: fourier_mse_loss(pred, target, fourier_weight=configs.fourier_weight)
         fft_layer = FFTLayer().to(device)
     
-    # NOTE: make this None if no FreDF
 
     print(f"{Fore.CYAN}--- Starting Training ---{Style.RESET_ALL}")
     print(f"Model: iTransformer | Epochs: {configs.epochs} | Dataset: {configs.dataset_name}")
@@ -142,7 +144,7 @@ def train():
     print(f"Loss function: '{criterion.__name__}'")
     print(f"-------------------------")
 
-    for epoch in range(configs.epochs): # training loop
+    for epoch in range(configs.epochs): # training loop; TODO: add early stopping check using validation loss here.
         epoch_start_time = time.time()
         
         train_loss = train_one_epoch(model, train_loader, optimizer, criterion, fft_layer, device)
@@ -159,6 +161,8 @@ def train():
         )
 
     print(f"{Fore.GREEN}--- Training Complete ---{Style.RESET_ALL}")
+
+    # TODO: save the model.
 
 if __name__ == "__main__":
     train()

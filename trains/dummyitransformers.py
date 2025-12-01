@@ -119,7 +119,6 @@ def train():
         freq='h',
         # --- Added fields to prevent crashing for Model initialization and device print ---
         factor=1, # Required by the AttentionLayer in the model definition, a dummy value here.
-        gpu_id=0, # Required by the print statement for CUDA device
 
         # --- Dummy Data Config ---
         num_features=7, # Example number of time series
@@ -136,8 +135,8 @@ def train():
     )
 
     if configs.use_gpu and torch.cuda.is_available():
-        device = torch.device(f"cuda:{configs.gpu_id}")
-        print(f"{Fore.GREEN}Using GPU: {torch.cuda.get_device_name(configs.gpu_id)}{Style.RESET_ALL}")
+        device = torch.device("cuda")
+        print(f"{Fore.GREEN}Using GPU: {torch.cuda.get_device_name(0)}{Style.RESET_ALL}")
     else:
         device = torch.device("cpu")
         print(f"{Fore.YELLOW}Using CPU{Style.RESET_ALL}")

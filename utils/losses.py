@@ -28,13 +28,11 @@ def fourier_loss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
     loss = torch.mean(torch.abs(pred_magnitude - target_magnitude))
     return loss
 
+# NOTE: this assumes the compute weighted combined MSE and MAE Loss in the frequency domain.
 def fourier_mse_loss(pred: torch.Tensor, target: torch.Tensor, fourier_weight: float) -> torch.Tensor:
     """
     Compute weighted combined MSE and MAE Loss in the frequency domain.
-    This function assumes 'pred' and 'target' are COMPLEX tensors (outputs of an FFT).
-    Losses are computed on the magnitudes of the frequency components.
-
-    Args:
+       Args:
         pred (Tensor): Predicted COMPLEX values of shape (batches, covariates, freq_bins).
         target (Tensor): True COMPLEX values of shape (batches, covariates, freq_bins).
         fourier_weight (float): Weighting factor for the MAE (L1) component (0 to 1.0).
