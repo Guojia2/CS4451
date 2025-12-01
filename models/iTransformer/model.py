@@ -35,6 +35,7 @@ class Model(nn.Module):
         )
         self.projector = nn.Linear(configs.d_model, configs.pred_len, bias=True)
         self.fft_layer = FFTLayer()
+        self.output_transformation = getattr(configs, 'output_transformation', 'time')
 
     def forecast(self, x_enc, x_mark_enc, x_dec, x_mark_dec):
         if self.use_norm:
@@ -65,9 +66,10 @@ class Model(nn.Module):
             dec_out = dec_out * (stdev[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1))
             dec_out = dec_out + (means[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1))
 
-        dec_out_fft = self.fft_layer(dec_out) # apply FFT to generated sequence 
+        if self.output_transformation == 'freq':
+            dec_out = self.fft_layer(dec_out)
 
-        return dec_out_fft, attns
+        return dec_out, attns
 
 
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec, mask=None):
