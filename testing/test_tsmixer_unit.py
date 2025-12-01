@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 
 from models.TSMixer import TSMixer
-from utils.losses import fourier_mse_loss
+from utils.losses import fredf_loss
 
 
 def _make_sinusoid(batch: int, total_len: int, enc_in: int) -> torch.Tensor:
@@ -58,7 +58,7 @@ class TSMixerUnitTest(unittest.TestCase):
         x = torch.randn(4, seq_len, enc_in)
         target = torch.randn(4, pred_len, enc_in)
         out = model(x)
-        loss = fourier_mse_loss(out, target, fourier_weight=0.4)
+        loss = fredf_loss(out, target, fourier_weight=0.4)
         loss.backward()
         grads = [p.grad for p in model.parameters() if p.requires_grad]
         self.assertTrue(any(g is not None and torch.isfinite(g).all() for g in grads))

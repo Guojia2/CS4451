@@ -1,4 +1,4 @@
-# layer definition for the FFT.
+# layer definition for the fft
 import torch 
 import torch.fft as fft 
 from torch import nn

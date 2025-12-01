@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 
-# Add parent directory to path
+# add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import torch
@@ -40,13 +40,13 @@ def test_tsmixer_forward():
         dropout=0.1
     )
     
-    # Create dummy input: [batch, covariates, lookback]
+    # create dummy input: [batch, covariates, lookback]
     batch_size = 4
     x = torch.randn(batch_size, 7, 96)
     
     print(f"  Input shape: {x.shape}")
     
-    # Forward pass
+    # forward pass
     with torch.no_grad():
         output = model(x)
     
@@ -56,7 +56,7 @@ def test_tsmixer_forward():
 
 
 def test_itransformer_backward_compatibility():
-    print("\nTest 3: iTransformer backward compatibility")
+    print("\nTest 3: itransformer backward compatibility")
     
     model = FredF(
         covariates=7,
@@ -122,11 +122,11 @@ def test_gradient_flow():
     x = torch.randn(2, 7, 96, requires_grad=True)
     output = model(x)
     
-    # Compute loss and backward
+    # compute loss and backward
     loss = output.sum()
     loss.backward()
     
-    # Check gradients
+    # check gradients
     has_grad = any(p.grad is not None and p.grad.abs().sum() > 0 for p in model.parameters())
     assert has_grad, "No gradients computed!"
     print("  Gradients flow properly through the model")

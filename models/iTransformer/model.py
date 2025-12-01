@@ -4,7 +4,6 @@ import torch.nn.functional as F
 from .Transformer_EncDec import Encoder, EncoderLayer
 from .SelfAttention_Family import FullAttention, AttentionLayer
 from .Embed import DataEmbedding_inverted
-from utils.fftlayer import FFTLayer
 
 class Model(nn.Module):
 
@@ -15,10 +14,10 @@ class Model(nn.Module):
         self.pred_len = configs.pred_len
         self.output_attention = configs.output_attention
         self.use_norm = configs.use_norm
-        # Embedding
+        # embedding
         self.enc_embedding = DataEmbedding_inverted(configs.seq_len, configs.d_model, configs.embed, configs.freq,
                                                     configs.dropout)
-        # Encoder-only architecture
+        # encoder-only architecture
         self.encoder = Encoder(
             [
                 EncoderLayer(
@@ -34,23 +33,21 @@ class Model(nn.Module):
             norm_layer=torch.nn.LayerNorm(configs.d_model)
         )
         self.projector = nn.Linear(configs.d_model, configs.pred_len, bias=True)
-        self.fft_layer = FFTLayer()
-        self.output_transformation = getattr(configs, 'output_transformation', 'time')
 
     def forecast(self, x_enc, x_mark_enc, x_dec, x_mark_dec):
         if self.use_norm:
-            # Normalization from Non-stationary Transformer
+            # normalization from non-stationary transformer
             means = x_enc.mean(1, keepdim=True).detach()
             x_enc = x_enc - means
             stdev = torch.sqrt(torch.var(x_enc, dim=1, keepdim=True, unbiased=False) + 1e-5)
             x_enc /= stdev
 
         _, _, N = x_enc.shape # B L N
-        # B: batch_size;    E: d_model; 
-        # L: seq_len;       S: pred_len;
-        # N: number of variate (tokens), can also includes covariates
+        # B: batch_size;    E: d_model
+        # L: seq_len;       S: pred_len
+        # N: num of variate (tokens), can also includes covariates
 
-        # Embedding
+        # embedding
         # B L N -> B N E                (B L N -> B L E in the vanilla Transformer)
         enc_out = self.enc_embedding(x_enc, x_mark_enc) # covariates (e.g timestamp) can be also embedded as tokens
         
@@ -58,16 +55,13 @@ class Model(nn.Module):
         # the dimensions of embedded time series has been inverted, and then processed by native attn, layernorm and ffn modules
         enc_out, attns = self.encoder(enc_out, attn_mask=None)
 
-        # B N E -> B N S -> B S N 
+        # B N E -> B N S -> B S N
         dec_out = self.projector(enc_out).permute(0, 2, 1)[:, :, :N] # filter the covariates
 
         if self.use_norm:
-            # De-Normalization from Non-stationary Transformer
+            # de-normalization from non-stationary transformer
             dec_out = dec_out * (stdev[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1))
             dec_out = dec_out + (means[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1))
-
-        if self.output_transformation == 'freq':
-            dec_out = self.fft_layer(dec_out)
 
         return dec_out, attns
 

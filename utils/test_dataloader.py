@@ -9,7 +9,7 @@ def summarize_batch(x, y):
     print(f"Input  batch shape : {x.shape}")   # [B, num_features, seq_len]
     print(f"Target batch shape : {y.shape}")   # [B, num_features, pred_len]
 
-    # Check normalization
+    # check normalization
     mean = x.mean().item()
     std = x.std().item()
     print(f"Input mean ≈ {mean:.4f}, std ≈ {std:.4f}")
@@ -41,7 +41,7 @@ def main():
     print("Loading training DataLoader...")
     train_loader = get_train_dataloader(lookback, horizon, batch_size, dataset_name=dataset_name)
 
-    # Grab one batch
+    # grab one batch
     x, y = next(iter(train_loader))
 
     summarize_batch(x, y)

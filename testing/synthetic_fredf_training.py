@@ -16,7 +16,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from models.TSMixer import TSMixer
-from utils.losses import fourier_mse_loss
+from utils.losses import fredf_loss
 
 
 @dataclass
@@ -32,7 +32,7 @@ class SynthConfig:
 
 
 class SineMixDataset(Dataset):
-    # produces sine mixture sequences for FreDF
+    # produces sine mixture sequences for fredf
 
     def __init__(self, cfg: SynthConfig, seed: int = 0) -> None:
         super().__init__()
@@ -80,7 +80,7 @@ def run_demo(cfg: SynthConfig | None = None) -> None:
             y = y.to(device)
             optimizer.zero_grad()
             out = model(x)
-            loss = fourier_mse_loss(out, y, fourier_weight=cfg.fourier_weight)
+            loss = fredf_loss(out, y, fourier_weight=cfg.fourier_weight)
             loss.backward()
             optimizer.step()
             total_loss += loss.item() * x.size(0)

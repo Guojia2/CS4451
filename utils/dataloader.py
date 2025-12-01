@@ -13,7 +13,7 @@ class FreDFDataset(Dataset):
                  normalize=True):
         # time series dataset for forecasting
         # root_path: dir with csv files (e.g. './temp/')
-        # dataset_name: 'ETTh1', 'ETTm1', 'Exchange', 'ILI', etc
+        # dataset_name: 'etth1', 'ettm1', 'exchange', 'ili', etc
         # seq_len: lookback window
         # pred_len: forecast horizon
         # split: 'train', 'val', or 'test'
@@ -23,45 +23,45 @@ class FreDFDataset(Dataset):
         self.split = split
         self.dataset_name = dataset_name
 
-        # Load and preprocess dataset
+        # load and preprocess dataset
         file_path = os.path.join(root_path, f"{dataset_name}.csv")
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"Dataset {file_path} not found!")
 
-        # Dataset-specific loading
+        # dataset-specific loading
         if dataset_name in ['Exchange', 'exchange']:
             data = self._load_exchange_data(file_path)
         elif dataset_name in ['ILI', 'ili', 'ILINet']:
             data = self._load_ili_data(file_path)
         else:
-            # Standard ETT and other datasets
+            # standard ett and other datasets
             data = self._load_standard_data(file_path)
 
-        # Get number of features
+        # get number of features
         self.num_features = data.shape[1]
 
-        # Define split boundaries based on dataset type
+        # define split boundaries based on dataset type
         train_end, val_end, test_end = self._get_split_boundaries(dataset_name, len(data))
 
-        # Normalize using training set statistics ONLY
+        # normalize using training set statistics only
         if normalize:
             train_data = data[:train_end]
             self.scaler = StandardScaler()
-            self.scaler.fit(train_data)  # Fit on train only
-            data = self.scaler.transform(data)  # Transform all
+            self.scaler.fit(train_data)  # fit on train only
+            data = self.scaler.transform(data)  # transform all
 
-        # Extract the appropriate split
+        # extract the appropriate split
         if split == 'train':
             self.data = data[:train_end]
         elif split == 'val':
-            # Start earlier by seq_len to have valid input sequences
+            # start earlier by seq_len to have valid input sequences
             self.data = data[train_end - seq_len:val_end]
         elif split == 'test':
             self.data = data[val_end - seq_len:test_end]
         else:
             raise ValueError("split must be 'train', 'val', or 'test'")
 
-        # Create sliding windows with stride=1 (overlapping)
+        # create sliding windows with stride=1 (overlapping)
         num_samples = len(self.data) - seq_len - pred_len + 1
         if num_samples <= 0:
             raise ValueError(f"Insufficient data for split '{split}': need at least {seq_len + pred_len} samples")
@@ -69,46 +69,46 @@ class FreDFDataset(Dataset):
         self.indices = np.arange(num_samples)
 
     def _load_standard_data(self, file_path):
-        # load standard CSV (ETT, Weather, etc)
+        # load standard csv (ett, weather, etc)
         df = pl.scan_csv(file_path)
         cols = df.columns
-        # Remove timestamp column if present (usually first column)
+        # remove timestamp column if present (usually first column)
         if any('date' in c.lower() or 'time' in c.lower() for c in cols):
             df = df.select(cols[1:])
         df = df.collect()
         return df.to_numpy().astype(np.float32)
 
     def _load_exchange_data(self, file_path):
-        # load Foreign Exchange Rates dataset
+        # load foreign exchange rates dataset
         df = pl.scan_csv(file_path)
         cols = df.columns
-        # Remove DATE column (first column)
+        # remove date column (first column)
         df = df.select(cols[1:])
         df = df.collect()
         return df.to_numpy().astype(np.float32)
 
     def _load_ili_data(self, file_path):
-        # load ILINet (Influenza-Like Illness) dataset
-        # ILI has 2 header rows - skip the first descriptive row
-        # Read all columns as strings first to handle 'X' values
+        # load ilinet (influenza-like illness) dataset
+        # ili has 2 header rows - skip the first descriptive row
+        # read all columns as strings first to handle 'X' values
         df = pl.read_csv(file_path, skip_rows=1, infer_schema_length=0)
         
-        # Select numeric columns for forecasting
-        # Drop categorical columns: REGION TYPE, REGION, YEAR, WEEK
-        # Use weighted ILI and age-specific counts
+        # select numeric columns for forecasting
+        # drop categorical columns: REGION TYPE, REGION, YEAR, WEEK
+        # use weighted ili and age-specific counts
         numeric_cols = ['% WEIGHTED ILI', '%UNWEIGHTED ILI', 'AGE 0-4', 
                        'AGE 5-24', 'AGE 25-49', 'AGE 25-64', 'AGE 50-64', 
                        'AGE 65', 'ILITOTAL', 'TOTAL PATIENTS']
         
-        # Filter to National level data only for consistency
+        # filter to national level data only for consistency
         df = df.filter(pl.col('REGION TYPE') == 'National')
         
-        # Handle 'X' values (missing data) - replace with column mean
+        # handle 'X' values (missing data) - replace with column mean
         data_list = []
         for col in numeric_cols:
             if col in df.columns:
                 series = df[col]
-                # Convert to string, replace 'X' with None, then to float
+                # convert to string, replace 'X' with None, then to float
                 values = []
                 for val in series:
                     if val == 'X' or val == 'x':
@@ -118,7 +118,7 @@ class FreDFDataset(Dataset):
                             values.append(float(val))
                         except:
                             values.append(None)
-                # Fill None with column mean
+                # fill none with column mean
                 valid_values = [v for v in values if v is not None]
                 if valid_values:
                     mean_val = np.mean(valid_values)
@@ -133,29 +133,29 @@ class FreDFDataset(Dataset):
     def _get_split_boundaries(self, dataset_name, total_length):
         # get train/val/test split boundaries for each dataset
         if 'ETTh' in dataset_name:
-            # Hourly data: 12-4-8 months
+            # hourly data: 12-4-8 months
             train_end = 12 * 30 * 24  # 8,640
             val_end = train_end + 4 * 30 * 24  # 11,520
             test_end = val_end + 8 * 30 * 24  # 17,280
         elif 'ETTm' in dataset_name:
-            # 15-minute data: 12-4-8 months
+            # 15-min data: 12-4-8 months
             train_end = 12 * 30 * 96  # 34,560
             val_end = train_end + 4 * 30 * 96  # 46,080
             test_end = val_end + 8 * 30 * 96  # 69,120
         elif dataset_name in ['Exchange', 'exchange']:
-            # Daily forex data: ~5218 samples (20 years)
-            # Use 70-10-20 split for daily data
+            # daily forex data: ~5218 samples (20 years)
+            # use 70-10-20 split for daily data
             train_end = int(total_length * 0.7)  # ~3,653
             val_end = int(total_length * 0.8)    # ~4,174
             test_end = total_length              # ~5,218
         elif dataset_name in ['ILI', 'ili', 'ILINet']:
-            # Weekly data: ~1469 samples
-            # Use 70-10-20 split
+            # weekly data: ~1469 samples
+            # use 70-10-20 split
             train_end = int(total_length * 0.7)  # ~1,028
             val_end = int(total_length * 0.8)    # ~1,175
             test_end = total_length              # ~1,469
         else:
-            # Default: 70-10-20 split
+            # default: 70-10-20 split
             train_end = int(total_length * 0.7)
             val_end = int(total_length * 0.8)
             test_end = total_length
@@ -173,20 +173,20 @@ class FreDFDataset(Dataset):
         seq_x = self.data[start:start + self.seq_len]
         seq_y = self.data[start + self.seq_len:start + self.seq_len + self.pred_len]
 
-        # Transpose to [num_features, seq_len] format for FreDF/iTransformer
-        # Shape: [time, features] -> [features, time]
+        # transpose to [num_features, seq_len] format for fredf/itransformer
+        # shape: [time, features] -> [features, time]
         seq_x = torch.tensor(seq_x.T, dtype=torch.float32)
         seq_y = torch.tensor(seq_y.T, dtype=torch.float32)
 
         return seq_x, seq_y
 
 
-# Example usage and verification
+# example usage and verification
 if __name__ == "__main__":
     print("Testing FreDFDataset with multiple datasets...")
     print()
     
-    # Test ETTh1
+    # test etth1
     print("1. ETTh1 Dataset (Hourly Electricity Transformer Temperature)")
     try:
         dataset = FreDFDataset("./temp/", "ETTh1", seq_len=96, pred_len=96, split='train')
@@ -203,7 +203,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"   Error loading ETTh1: {e}")
     
-    # Test Exchange
+    # test exchange
     print("\n2. Exchange Dataset (Daily Foreign Exchange Rates)")
     try:
         dataset = FreDFDataset("./temp/", "Exchange", seq_len=96, pred_len=96, split='train')
@@ -220,7 +220,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f" error loading Exchange: {e}")
     
-    # Test ILI
+    # test ili
     print("\n3. ILI Dataset (Weekly Influenza-Like Illness)")
     try:
         dataset = FreDFDataset("./temp/", "ILI", seq_len=36, pred_len=24, split='train')

@@ -23,7 +23,7 @@ class Norm2D(nn.Module):
 
 
 class TimeMixingMLP(nn.Module):
-    # shared MLP that mixes info along temporal dimension
+    # shared mlp that mixes info along temporal dimension
 
     def __init__(self, seq_len: int, dropout: float) -> None:
         super().__init__()
@@ -41,7 +41,7 @@ class TimeMixingMLP(nn.Module):
 
 
 class FeatureMixingMLP(nn.Module):
-    # shared MLP that mixes info across features
+    # shared mlp that mixes info across features
 
     def __init__(self, enc_in: int, d_ff: int, dropout: float) -> None:
         super().__init__()
@@ -77,7 +77,7 @@ class MixerBlock(nn.Module):
 
 
 class TSMixer(nn.Module):
-    # TSMixer (arXiv:2303.06053) for multivariate forecasting, I/O [B, L, C]
+    # tsmixer (arXiv:2303.06053) for multivariate forecasting, I/O [B, L, C]
 
     def __init__(
         self,
@@ -99,7 +99,7 @@ class TSMixer(nn.Module):
         self.mixer_blocks = nn.ModuleList(
             [MixerBlock(seq_len, enc_in, d_ff, dropout) for _ in range(n_blocks)]
         )
-        # Temporal projection maps lookback window L to forecast horizon T per feature.
+        # temporal projection maps lookback window L to forecast horizon T per feature
         self.temporal_projection = nn.Linear(seq_len, pred_len)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

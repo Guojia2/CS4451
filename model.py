@@ -31,9 +31,9 @@ class ITransformerConfig:
 
 
 class ITransformerWrapper(nn.Module):
-    # wrapper to handle shape conversions for FreDF
+    # handles shape conversions for fredf
     # input: (batch, covariates, lookback_window)
-    # output:  (batch, covariates, forecast_horizon)
+    # output: (batch, covariates, forecast_horizon)
     def __init__(self, seq_len: int, pred_len: int, enc_in: int, dec_in: int = None,
                  d_model: int = 128, n_heads: int = 8, e_layers: int = 2, 
                  d_ff: int = 128, dropout: float = 0.1, **kwargs):
@@ -63,29 +63,29 @@ class ITransformerWrapper(nn.Module):
         assert c == self.enc_in and t == self.seq_len, \
             f"Expected shape [B, {self.enc_in}, {self.seq_len}], got {x.shape}"
         
-        # Transpose to [B, L, C] for iTransformer
+        # transpose to [B, L, C] for itransformer
         x = x.transpose(1, 2)
         
-        # iTransformer doesn't use time marks in our simple case
+        # itransformer doesnt use time marks in our simple case
         x_mark_enc = None
         x_dec = None
         x_mark_dec = None
         
-        # Forward through iTransformer: [B, L, C] -> [B, pred_len, C]
+        # forward thru itransformer: [B, L, C] -> [B, pred_len, C]
         output = self.model(x, x_mark_enc, x_dec, x_mark_dec)
         
-        # Transpose back to [B, C, pred_len] for FreDF
+        # transpose back to [B, C, pred_len] for fredf
         output = output.transpose(1, 2)
         
         return output  
 
 class FredF(nn.Module):
-    # FreDF model with configurable backbone (iTransformer or TSMixer)
-    # lookback_window: number of past timesteps
+    # fredf model with configurable backbone (itransformer or tsmixer)
+    # lookback_window: num of past timesteps
     # forecast_horizon: how many steps to predict
-    # covariates: number of parallel time series
+    # covariates: num of parallel time series
     # backbone: 'itransformer' or 'tsmixer'
-    # d_model, n_heads, e_layers, d_ff, dropout:  model hyperparams
+    # d_model, n_heads, e_layers, d_ff, dropout: model hyperparams
     def __init__(self, covariates: int, lookback_window: int, forecast_horizon: int,
                  backbone: str = 'itransformer',
                  d_model: int = 128, n_heads: int = 8, e_layers: int = 2, 

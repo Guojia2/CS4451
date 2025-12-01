@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-# Add parent directory to path so we can import model and utils
+# add parent directory to path so we can import model and utils
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import torch
@@ -12,7 +12,7 @@ from typing import Callable
 from torch.utils.data import DataLoader
 from torch.optim import Optimizer
 from torch import Tensor
-from utils.losses import fourier_mse_loss, fourier_mae_loss
+from utils.losses import fredf_loss
 
 
 def train_epoch(
@@ -23,7 +23,7 @@ def train_epoch(
     device: torch.device,
     fourier_weight: float
 ) -> float:
-    # train one epoch of FreDF
+    # train one epoch of fredf
     model.train()
     total_loss = 0.0
     for x, y in dataloader:
@@ -47,7 +47,7 @@ def eval_epoch(
     device: torch.device,
     fourier_weight: float
 ) -> float:
-    # evaluate FreDF for one epoch
+    # eval fredf for one epoch
     model.eval()
     total_loss = 0.0
     with torch.no_grad():
@@ -79,9 +79,9 @@ def compute_metrics(model: FredF, dataloader: DataLoader, device: torch.device):
 
 
 def main() -> None:
-    # main training loop for FreDF
-    # supports ETTh1, Exchange, ILI datasets
-    # can choose between iTransformer and TSMixer backbone
+    # main training loop for fredf
+    # supports etth1, exchange, ili datasets
+    # can choose between itransformer and tsmixer backbone
     import argparse
     
     parser = argparse.ArgumentParser(description='FreDF Training')
@@ -105,6 +105,18 @@ def main() -> None:
     parser.add_argument('--e_layers', type=int, default=2, help='Number of encoder layers')
     parser.add_argument('--dropout', type=float, default=0.1, help='Dropout rate')
     
+    # interpretability options
+    parser.add_argument('--run_interp', action='store_true',
+                       help='run interpretability analysis after training')
+    parser.add_argument('--interp_methods', type=str, default='ig,attention,masking',
+                       help='interpretability methods: ig, attention, masking (comma-separated)')
+    parser.add_argument('--interp_samples', type=int, default=3,
+                       help='number of test samples for interpretability')
+    parser.add_argument('--interp_indices', type=str, default=None,
+                       help='specific test indices for interpretability (e.g. "0,5,10")')
+    parser.add_argument('--interp_output_dir', type=str, default='./interpretability_results',
+                       help='output directory for interpretability visualizations')
+    
     args = parser.parse_args()
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -122,7 +134,7 @@ def main() -> None:
     
     config = dataset_configs[args.dataset]
     
-    # Use provided values or defaults from config
+    # use provided values or defaults from config
     lookback_window = args.seq_len if args.seq_len else config['seq_len']
     forecast_horizon = args.pred_len if args.pred_len else config['pred_len']
     covariates = config['features']
@@ -141,7 +153,7 @@ def main() -> None:
     print(f"Model: d_model={args.d_model}, n_heads={args.n_heads}, e_layers={args.e_layers}, d_ff={d_ff}")
     print()
     
-    # Data loading
+    # data loading
     print(f"Loading {args.dataset} dataset...")
     train_loader = get_train_dataloader(
         lookback_window, forecast_horizon, batch_size=args.batch_size,
@@ -158,7 +170,7 @@ def main() -> None:
     
     print(f"Train samples: {len(train_loader.dataset)}, Val samples: {len(val_loader.dataset)}, Test samples: {len(test_loader.dataset)}")
     
-    # Model initialization
+    # model init
     model = FredF(
         covariates=covariates,
         lookback_window=lookback_window,
@@ -174,7 +186,7 @@ def main() -> None:
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-    loss_fn = fourier_mse_loss
+    loss_fn = fredf_loss  # fredf paper loss: λ*L_freq + (1-λ)*L_temp
     
     print(f"\nTraining with fourier_weight (λ) = {args.lambda_freq}")
     print(f"Loss: {args.lambda_freq} * L_freq + {1-args.lambda_freq} * L_temp\n")
@@ -185,7 +197,7 @@ def main() -> None:
         train_loss = train_epoch(model, train_loader, optimizer, loss_fn, device, fourier_weight=args.lambda_freq)
         val_loss = eval_epoch(model, val_loader, loss_fn, device, fourier_weight=args.lambda_freq)
         
-        # Compute metrics
+        # compute metrics
         val_mse, val_mae = compute_metrics(model, val_loader, device)
         
         print(f"Epoch {epoch}/{args.epochs}: train_loss={train_loss:.4f}, val_loss={val_loss:.4f}, val_mse={val_mse:.4f}, val_mae={val_mae:.4f}")
@@ -195,12 +207,20 @@ def main() -> None:
             torch.save(model.state_dict(), f'./checkpoints/best_model_{args.dataset}_{args.backbone}.pt')
             print(f"  -> Best model saved (val_loss={val_loss:.4f})")
     
-    # Final test evaluation
+    # final test eval
     print("\nFinal Test Evaluation:")
     model.load_state_dict(torch.load(f'./checkpoints/best_model_{args.dataset}_{args.backbone}.pt'))
     test_mse, test_mae = compute_metrics(model, test_loader, device)
     print(f"Test MSE: {test_mse:.4f}")
     print(f"Test MAE: {test_mae:.4f}")
+    
+    # optionally run interpretability
+    if args.run_interp:
+        print("\n" + "="*50)
+        print("running interpretability analysis...")
+        print("="*50)
+        from utils.interpret import run_interpretability
+        run_interpretability(model, test_loader, device, args)
 
 
 if __name__ == "__main__":
