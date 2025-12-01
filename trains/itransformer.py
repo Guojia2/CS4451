@@ -22,7 +22,7 @@ def train_one_epoch(model, train_loader, optimizer, criterion, fft_layer, device
         batch_x = batch_x.to(device)
         batch_y = batch_y.to(device) # batch_y is time domain 
 
-        # get model prediction 
+        # get model prediction NOTE: model() returns 2 values when output_attention=True, and 1 when output_attention=False. 
         y_hat_freq, _ = model(batch_x, None, None, None)
 
         y_acc = batch_y
@@ -100,11 +100,12 @@ def train():
         learning_rate=1e-4,
         epochs=10,
 
-        use_gpu=True
+        use_gpu=True,
+        fourier_weight=0.5
     )
 
     if configs.use_gpu and torch.cuda.is_available():
-        device = torch.device("gpu")
+        device = torch.device("cuda")
         print(f"{Fore.GREEN}Using GPU: {torch.cuda.get_device_name(configs.gpu_id)}{Style.RESET_ALL}")
     else:
         device = torch.device("cpu")
@@ -123,8 +124,16 @@ def train():
     val_loader = get_val_dataloader(configs.seq_len, configs.pred_len, configs.batch_size, dataset_name=configs.dataset_name, root_path=configs.root_path)
 
     optimizer = optim.Adam(model.parameters(), lr=configs.learning_rate)
-    criterion = fourier_mse_loss  # use imported custom loss 
-    fft_layer = FFTLayer().to(device) # used for freDF 
+    
+    fft_layer = None
+    # Use a standard loss by default
+    criterion = nn.MSELoss()
+    # Conditionally set up for frequency domain training
+    if configs.output_transformation == 'freq':
+        # Use a lambda to wrap the criterion with its fourier_weight argument
+        criterion = lambda pred, target: fourier_mse_loss(pred, target, fourier_weight=configs.fourier_weight)
+        fft_layer = FFTLayer().to(device)
+    
     # NOTE: make this None if no FreDF
 
     print(f"{Fore.CYAN}--- Starting Training ---{Style.RESET_ALL}")

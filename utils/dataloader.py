@@ -75,9 +75,9 @@ class FreDFDataset(Dataset):
         seq_x = self.data[start:start + self.seq_len]
         seq_y = self.data[start + self.seq_len:start + self.seq_len + self.pred_len]
 
-        # iTransformer expects [batch, num_features, seq_len]
-        seq_x = torch.tensor(seq_x.T, dtype=torch.float32)
-        seq_y = torch.tensor(seq_y.T, dtype=torch.float32)
+        # The model expects (seq_len, num_features), which the dataloader batches to (batch, seq_len, num_features)
+        seq_x = torch.tensor(seq_x, dtype=torch.float32)
+        seq_y = torch.tensor(seq_y, dtype=torch.float32)
 
         return seq_x, seq_y
 

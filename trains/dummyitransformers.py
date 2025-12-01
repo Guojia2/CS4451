@@ -27,9 +27,9 @@ class DummyDataset(Dataset):
         self.num_features = num_features
         
         # Generate all data at once and store in memory
-        # Shape for iTransformer input (batch, features, seq_len)
-        self.data_x = torch.randn(num_samples, num_features, seq_len)
-        self.data_y = torch.randn(num_samples, num_features, pred_len)
+        # Model expects (Batch, Seq_Len, Num_Features)
+        self.data_x = torch.randn(num_samples, seq_len, num_features)
+        self.data_y = torch.randn(num_samples, pred_len, num_features)
 
     def __len__(self):
         return self.num_samples
@@ -49,7 +49,7 @@ def train_one_epoch(model, train_loader, optimizer, criterion, fft_layer, device
         batch_x = batch_x.to(device)
         batch_y = batch_y.to(device) # batch_y is time domain 
 
-        y_hat_freq, _ = model(batch_x, None, None, None)
+        y_hat_freq = model(batch_x, None, None, None)
 
         y_acc = batch_y
         if fft_layer:
@@ -77,7 +77,7 @@ def validate(model, val_loader, criterion, fft_layer, device):
             batch_x = batch_x.to(device)
             batch_y = batch_y.to(device)
 
-            y_hat_freq, _ = model(batch_x, None, None, None)
+            y_hat_freq = model(batch_x, None, None, None)
             
             y_acc = batch_y 
             if fft_layer:
@@ -122,12 +122,12 @@ def train():
 
         # System configs
         use_gpu=True,
-        gpu_id=0
+        fourier_weight=0.5
     )
 
     # --- Setup Device ---
     if configs.use_gpu and torch.cuda.is_available():
-        device = torch.device(f"cuda:{configs.gpu_id}")
+        device = torch.device("gpu")
         print(f"{Fore.GREEN}Using GPU: {torch.cuda.get_device_name(configs.gpu_id)}{Style.RESET_ALL}")
     else:
         device = torch.device("cpu")
@@ -152,7 +152,8 @@ def train():
     criterion = nn.MSELoss()
     if configs.output_transformation == 'freq':
         print(f"{Fore.CYAN}Training in frequency domain. Using fourier_mse_loss.{Style.RESET_ALL}")
-        criterion = fourier_mse_loss
+        # Use a lambda to wrap the criterion with its fourier_weight argument
+        criterion = lambda pred, target: fourier_mse_loss(pred, target, fourier_weight=configs.fourier_weight)
         fft_layer = FFTLayer().to(device)
     else:
         print(f"{Fore.CYAN}Training in time domain. Using nn.MSELoss.{Style.RESET_ALL}")
