@@ -4,13 +4,9 @@ import torch.nn.functional as F
 from .Transformer_EncDec import Encoder, EncoderLayer
 from .SelfAttention_Family import FullAttention, AttentionLayer
 from .Embed import DataEmbedding_inverted
-import numpy as np
-
+from utils.fftlayer import FFTLayer
 
 class Model(nn.Module):
-    """
-    Paper link: https://arxiv.org/abs/2310.06625
-    """
 
     def __init__(self, configs):
         super(Model, self).__init__()
@@ -38,6 +34,7 @@ class Model(nn.Module):
             norm_layer=torch.nn.LayerNorm(configs.d_model)
         )
         self.projector = nn.Linear(configs.d_model, configs.pred_len, bias=True)
+        self.fft_layer = FFTLayer()
 
     def forecast(self, x_enc, x_mark_enc, x_dec, x_mark_dec):
         if self.use_norm:
@@ -68,7 +65,9 @@ class Model(nn.Module):
             dec_out = dec_out * (stdev[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1))
             dec_out = dec_out + (means[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1))
 
-        return dec_out, attns
+        dec_out_fft = self.fft_layer(dec_out) # apply FFT to generated sequence 
+
+        return dec_out_fft, attns
 
 
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec, mask=None):
