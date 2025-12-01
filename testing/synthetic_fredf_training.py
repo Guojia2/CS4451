@@ -1,6 +1,5 @@
-"""Quick synthetic training script to validate TSMixer + FreDF loss.
-Generates sine mixtures online so no external datasets are required.
-"""
+# quick synthetic training to validate TSMixer + FreDF loss
+# generates sine mixtures so no external datasets needed
 from __future__ import annotations
 
 import math
@@ -33,7 +32,7 @@ class SynthConfig:
 
 
 class SineMixDataset(Dataset):
-    """Produces sine mixture sequences so FreDF has meaningful structure."""
+    # produces sine mixture sequences for FreDF
 
     def __init__(self, cfg: SynthConfig, seed: int = 0) -> None:
         super().__init__()

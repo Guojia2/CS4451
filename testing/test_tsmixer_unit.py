@@ -1,6 +1,4 @@
-"""Unit tests for the local TSMixer implementation.
-These cover shape checks, a tiny sinusoid fit, and FreDF loss compatibility.
-"""
+# unit tests for TSMixer - shape checks, sinusoid fit, FreDF loss compat
 import unittest
 
 import torch

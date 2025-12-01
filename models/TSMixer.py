@@ -1,7 +1,6 @@
-"""TSMixer backbone for multivariate forecasting (arXiv:2303.06053).
-This implementation follows the repository's batch/sequence conventions and
-returns tensors compatible with the FreDF training loop.
-"""
+# TSMixer for multivariate forecasting (arXiv:2303.06053)
+# follows batch/sequence conventions
+# returns tensors compatible with FreDF training
 from __future__ import annotations
 
 from typing import Optional
@@ -11,7 +10,7 @@ from torch import nn
 
 
 class Norm2D(nn.Module):
-    """Normalizes each sample across time and feature dimensions."""
+    # normalizes each sample across time and feature dims
 
     def __init__(self, eps: float = 1e-5) -> None:
         super().__init__()
@@ -24,7 +23,7 @@ class Norm2D(nn.Module):
 
 
 class TimeMixingMLP(nn.Module):
-    """Shared MLP that mixes information along the temporal dimension."""
+    # shared MLP that mixes info along temporal dimension
 
     def __init__(self, seq_len: int, dropout: float) -> None:
         super().__init__()
@@ -42,7 +41,7 @@ class TimeMixingMLP(nn.Module):
 
 
 class FeatureMixingMLP(nn.Module):
-    """Shared MLP that mixes information across feature dimensions."""
+    # shared MLP that mixes info across features
 
     def __init__(self, enc_in: int, d_ff: int, dropout: float) -> None:
         super().__init__()
@@ -62,7 +61,7 @@ class FeatureMixingMLP(nn.Module):
 
 
 class MixerBlock(nn.Module):
-    """Alternates time and feature mixing with residual connections."""
+    # alternates time and feature mixing w/ residual connections
 
     def __init__(self, seq_len: int, enc_in: int, d_ff: int, dropout: float) -> None:
         super().__init__()
@@ -78,7 +77,7 @@ class MixerBlock(nn.Module):
 
 
 class TSMixer(nn.Module):
-    """TSMixer (arXiv:2303.06053) for multivariate forecasting with I/O [B, L, C]."""
+    # TSMixer (arXiv:2303.06053) for multivariate forecasting, I/O [B, L, C]
 
     def __init__(
         self,

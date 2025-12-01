@@ -4,10 +4,8 @@ import matplotlib.pyplot as plt
 from dataloader import get_train_dataloader, get_val_dataloader
 
 def summarize_batch(x, y):
-    """
-    Print shape and statistics for a sample batch.
-    """
-    print("\n=== Data Loader Test Summary ===")
+    # print shape and stats for a sample batch
+    print("\nData Loader Test Summary")
     print(f"Input  batch shape : {x.shape}")   # [B, num_features, seq_len]
     print(f"Target batch shape : {y.shape}")   # [B, num_features, pred_len]
 
@@ -18,9 +16,7 @@ def summarize_batch(x, y):
     print(f"Target mean ≈ {y.mean().item():.4f}, std ≈ {y.std().item():.4f}")
 
 def plot_sample(x, y, feature_idx=0):
-    """
-    Plot one feature’s input and predicted (target) segment.
-    """
+    # plot one feature's input and target segment
     x_np = x[0, feature_idx].cpu().numpy()
     y_np = y[0, feature_idx].cpu().numpy()
     t_in = np.arange(len(x_np))

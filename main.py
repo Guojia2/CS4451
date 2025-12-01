@@ -1,6 +1,13 @@
 def main():
-    print("Hello from fredf!")
+    print("FreDF Training")
+    print("Usage: python main.py --backbone [itransformer|tsmixer]")
+    print()
+    
+    # Import and run training
+    from trains.train import main as train_main
+    train_main()
 
 
 if __name__ == "__main__":
     main()
+
