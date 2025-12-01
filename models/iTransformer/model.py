@@ -4,14 +4,11 @@ import torch.nn.functional as F
 from .Transformer_EncDec import Encoder, EncoderLayer
 from .SelfAttention_Family import FullAttention, AttentionLayer
 from .Embed import DataEmbedding_inverted
-import numpy as np
-
+from utils.fftlayer import FFTLayer
 
 class Model(nn.Module):
-    """
-    Paper link: https://arxiv.org/abs/2310.06625
-    """
 
+    # takes in configs object for all model hyperparams
     def __init__(self, configs):
         super(Model, self).__init__()
         self.seq_len = configs.seq_len
@@ -21,7 +18,6 @@ class Model(nn.Module):
         # Embedding
         self.enc_embedding = DataEmbedding_inverted(configs.seq_len, configs.d_model, configs.embed, configs.freq,
                                                     configs.dropout)
-        self.class_strategy = configs.class_strategy
         # Encoder-only architecture
         self.encoder = Encoder(
             [
@@ -38,6 +34,8 @@ class Model(nn.Module):
             norm_layer=torch.nn.LayerNorm(configs.d_model)
         )
         self.projector = nn.Linear(configs.d_model, configs.pred_len, bias=True)
+        self.fft_layer = FFTLayer()
+        self.output_transformation = getattr(configs, 'output_transformation', 'time')
 
     def forecast(self, x_enc, x_mark_enc, x_dec, x_mark_dec):
         if self.use_norm:
@@ -67,6 +65,9 @@ class Model(nn.Module):
             # De-Normalization from Non-stationary Transformer
             dec_out = dec_out * (stdev[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1))
             dec_out = dec_out + (means[:, 0, :].unsqueeze(1).repeat(1, self.pred_len, 1))
+
+        if self.output_transformation == 'freq':
+            dec_out = self.fft_layer(dec_out)
 
         return dec_out, attns
 
