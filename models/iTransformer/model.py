@@ -8,6 +8,7 @@ from utils.fftlayer import FFTLayer
 
 class Model(nn.Module):
 
+    # takes in configs object for all model hyperparams
     def __init__(self, configs):
         super(Model, self).__init__()
         self.seq_len = configs.seq_len
@@ -17,7 +18,6 @@ class Model(nn.Module):
         # Embedding
         self.enc_embedding = DataEmbedding_inverted(configs.seq_len, configs.d_model, configs.embed, configs.freq,
                                                     configs.dropout)
-        self.class_strategy = configs.class_strategy
         # Encoder-only architecture
         self.encoder = Encoder(
             [

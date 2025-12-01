@@ -66,21 +66,31 @@ def validate(model, val_loader, criterion, fft_layer, device):
 """
 high level training code for using iTransformer with or without FreDF
 To use FreDF, make sure output_transformation='freq' and fft_layer is initialized and passed in to the train_one_epoch and validate methods.
-To just train a regular iTransformer, do output_transformation='time' and fft_layer = None.
+To just train a regular iTransformer, do output_transformation='time' and fft_layer = None. The iTransformer model class takes in a configs object, so pls use a SimpleNameSpace for the config fields.
 """
 def train():
 
     configs = SimpleNamespace(
         # Model config
-        seq_len=96,
-        pred_len=24,
-        d_model=512,
-        n_heads=8,
-        e_layers=2,
-        d_ff=2048,
-        dropout=0.1,
-        activation='gelu',
+        seq_len=96, # sequence length 
+        pred_len=24, # prediction length
+        d_model=512, # model dimensionality 
+        n_heads=8, # number of attention heads 
+        e_layers=2, # number of encoder layers 
+        d_ff=2048, # FFN dimension
+        dropout=0.1, # dropout rate 
+        activation='gelu', # activation function 
         output_transformation='freq', # 'freq' for applying FreDF, default is 'time'
+        use_norm=True,  # normalizes input for each time series in the batch, and normalizes output (scales output back to original range)
+        # NOTE: Jia's dataloader has the normalize field which applies
+        # global normalization, while use_norm applies nomralization to a single batch instance for the model inside forecast(). It should be fine to use both.
+
+        output_attention=True, # whether the model returns self attn weights with preds. Returns (predictions, attn_weights) if True and predictions if False
+
+        # NOTE: embed and freq do not change any internal logic, use these
+        # These fields are saved for additional changes later
+        embed='fixed',
+        freq='h',
 
         # NOTE: replace this with actual dataset and batch size 
         dataset_name='ETTh1',
