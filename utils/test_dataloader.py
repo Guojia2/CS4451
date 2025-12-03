@@ -1,3 +1,10 @@
+
+"""
+This entire Python file is now out of date and not useful due to chagnes made to dataloader.py
+It no longer tests all of the necessary functionality of dataloader.py
+
+
+"""
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
