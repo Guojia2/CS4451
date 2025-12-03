@@ -70,7 +70,18 @@ class FreDFDataset(Dataset):
 
     def _load_standard_data(self, file_path):
         # load standard csv (ett, weather, etc)
-        df = pl.scan_csv(file_path)
+        full_schema = {
+            "date": pl.String,
+            "HUFL": pl.Float64,
+            "HULL": pl.Float64,
+            "MULL": pl.Float64,
+            "MUFL": pl.Float64,
+            "LUFL": pl.Float64,
+            "LULL": pl.Float64,
+            "OT": pl.Float64,
+        }
+
+        df = pl.scan_csv(file_path, schema=full_schema)
         cols = df.columns
         # remove timestamp column if present (usually first column)
         if any('date' in c.lower() or 'time' in c.lower() for c in cols):
@@ -85,7 +96,13 @@ class FreDFDataset(Dataset):
         # remove date column (first column)
         df = df.select(cols[1:])
         df = df.collect()
-        return df.to_numpy().astype(np.float32) # This line right here is where our training pipleine fails because it cannot handle the ND entries.
+        df = df.with_columns(
+            [
+                pl.when(pl.col(col) == "ND").then(None).otherwise(pl.col(col)).alias(col)
+                for col in df.columns
+            ]
+        )
+        return df.to_numpy().astype(np.float64) # This line right here is where our training pipleine fails because it cannot handle the ND entries.
 
     def _load_ili_data(self, file_path):
         # load ilinet (influenza-like illness) dataset
