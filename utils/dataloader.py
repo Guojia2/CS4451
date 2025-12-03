@@ -76,7 +76,7 @@ class FreDFDataset(Dataset):
         if any('date' in c.lower() or 'time' in c.lower() for c in cols):
             df = df.select(cols[1:])
         df = df.collect()
-        return df.to_numpy().astype(np.float32)
+        return df.to_numpy().astype(np.float64)
 
     def _load_exchange_data(self, file_path):
         # load foreign exchange rates dataset
@@ -127,7 +127,7 @@ class FreDFDataset(Dataset):
                     values = [0.0] * len(values)
                 data_list.append(values)
         
-        data = np.array(data_list, dtype=np.float32).T
+        data = np.array(data_list, dtype=np.float64).T
         return data
 
     def _get_split_boundaries(self, dataset_name, total_length):
@@ -175,8 +175,8 @@ class FreDFDataset(Dataset):
 
         # transpose to [num_features, seq_len] format for fredf/itransformer
         # shape: [time, features] -> [features, time]
-        seq_x = torch.tensor(seq_x.T, dtype=torch.float32)
-        seq_y = torch.tensor(seq_y.T, dtype=torch.float32)
+        seq_x = torch.tensor(seq_x.T, dtype=torch.float64)
+        seq_y = torch.tensor(seq_y.T, dtype=torch.float64)
 
         return seq_x, seq_y
 
