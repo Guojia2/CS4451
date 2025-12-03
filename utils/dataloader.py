@@ -85,7 +85,7 @@ class FreDFDataset(Dataset):
         # remove date column (first column)
         df = df.select(cols[1:])
         df = df.collect()
-        return df.to_numpy().astype(np.float32)
+        return df.to_numpy().astype(np.float32) # This line right here is where our training pipleine fails because it cannot handle the ND entries.
 
     def _load_ili_data(self, file_path):
         # load ilinet (influenza-like illness) dataset
