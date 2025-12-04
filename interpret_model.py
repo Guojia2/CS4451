@@ -52,6 +52,8 @@ def main():
                        help='which horizon steps to analyze (comma-separated, default: first,mid,last)')
     parser.add_argument('--interp_output_dir', type=str, default='./interpretability_results',
                        help='where to save visualizations')
+    parser.add_argument('--target_variate', type=int, default=None,
+                       help='which output variate to target for importance (0-indexed, default: all)')
     
     # method-specific params
     parser.add_argument('--ig_steps', type=int, default=50,

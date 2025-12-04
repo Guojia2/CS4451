@@ -114,8 +114,16 @@ def main() -> None:
                        help='number of test samples for interpretability')
     parser.add_argument('--interp_indices', type=str, default=None,
                        help='specific test indices for interpretability (e.g. "0,5,10")')
+    parser.add_argument('--interp_horizons', type=str, default=None,
+                       help='specific horizon steps to analyze (comma-separated, e.g. "0,24,48")')
     parser.add_argument('--interp_output_dir', type=str, default='./interpretability_results',
                        help='output directory for interpretability visualizations')
+    parser.add_argument('--ig_steps', type=int, default=50,
+                       help='number of steps for integrated gradients')
+    parser.add_argument('--patch_size', type=int, default=8,
+                       help='patch size for masking analysis')
+    parser.add_argument('--target_variate', type=int, default=None,
+                       help='which output variate to compute importance for (None = all variates)')
     
     args = parser.parse_args()
     
