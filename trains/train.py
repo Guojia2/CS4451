@@ -222,6 +222,29 @@ def main() -> None:
     print(f"Test MSE: {test_mse:.4f}")
     print(f"Test MAE: {test_mae:.4f}")
     
+    # print all hyperparameters
+    print("\n" + "="*50)
+    print("HYPERPARAMETE SUMMARY")
+    print("="*50)
+    print(f"Dataset: {args.dataset}")
+    print(f"Backbone: {args.backbone}")
+    print(f"Input sequence length (seq_len): {lookback_window}")
+    print(f"Forecast horizon (pred_len): {forecast_horizon}")
+    print(f"Number of features (covariates): {covariates}")
+    print(f"Batch size: {args.batch_size}")
+    print(f"Learning rate: {args.lr}")
+    print(f"Number of epochs: {args.epochs}")
+    print(f"Lambda (frequency weight): {args.lambda_freq}")
+    print(f"Model dimension (d_model): {args.d_model}")
+    print(f"Number of attention heads (n_heads): {args.n_heads}")
+    print(f"Number of encoder layers (e_layers): {args.e_layers}")
+    print(f"Feedforward dimension (d_ff): {d_ff}")
+    print(f"Dropout rate: {args.dropout}")
+    print(f"Device: {device}")
+    print(f"Total model parameters: {sum(p.numel() for p in model.parameters()):,}")
+    print(f"Best validation loss: {best_val_loss:.4f}")
+    print("="*50 + "\n")
+    
     # optionally run interpretability
     if args.run_interp:
         print("\n" + "="*50)
