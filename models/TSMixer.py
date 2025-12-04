@@ -101,6 +101,7 @@ class TSMixer(nn.Module):
         )
         # temporal projection maps lookback window L to forecast horizon T per feature
         self.temporal_projection = nn.Linear(seq_len, pred_len)
+        self.double()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if x.dim() != 3:

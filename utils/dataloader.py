@@ -70,13 +70,24 @@ class FreDFDataset(Dataset):
 
     def _load_standard_data(self, file_path):
         # load standard csv (ett, weather, etc)
-        df = pl.scan_csv(file_path)
+        full_schema = {
+            "date": pl.String,
+            "HUFL": pl.Float64,
+            "HULL": pl.Float64,
+            "MULL": pl.Float64,
+            "MUFL": pl.Float64,
+            "LUFL": pl.Float64,
+            "LULL": pl.Float64,
+            "OT": pl.Float64,
+        }
+
+        df = pl.scan_csv(file_path, schema=full_schema)
         cols = df.columns
         # remove timestamp column if present (usually first column)
         if any('date' in c.lower() or 'time' in c.lower() for c in cols):
             df = df.select(cols[1:])
         df = df.collect()
-        return df.to_numpy().astype(np.float32)
+        return df.to_numpy().astype(np.float64)
 
     def _load_exchange_data(self, file_path):
         # load foreign exchange rates dataset
@@ -85,7 +96,14 @@ class FreDFDataset(Dataset):
         # remove date column (first column)
         df = df.select(cols[1:])
         df = df.collect()
-        return df.to_numpy().astype(np.float32)
+        df = df.with_columns(
+            [
+                pl.when(pl.col(col) == "ND").then(None).otherwise(pl.col(col)).alias(col)
+                for col in df.columns
+            ]
+        )
+        df = df.fill_null(strategy="forward")
+        return df.to_numpy().astype(np.float64) # This line right here is where our training pipleine fails because it cannot handle the ND entries.
 
     def _load_ili_data(self, file_path):
         # load ilinet (influenza-like illness) dataset
@@ -127,7 +145,7 @@ class FreDFDataset(Dataset):
                     values = [0.0] * len(values)
                 data_list.append(values)
         
-        data = np.array(data_list, dtype=np.float32).T
+        data = np.array(data_list, dtype=np.float64).T
         return data
 
     def _get_split_boundaries(self, dataset_name, total_length):
@@ -175,8 +193,8 @@ class FreDFDataset(Dataset):
 
         # transpose to [num_features, seq_len] format for fredf/itransformer
         # shape: [time, features] -> [features, time]
-        seq_x = torch.tensor(seq_x.T, dtype=torch.float32)
-        seq_y = torch.tensor(seq_y.T, dtype=torch.float32)
+        seq_x = torch.tensor(seq_x.T, dtype=torch.float64)
+        seq_y = torch.tensor(seq_y.T, dtype=torch.float64)
 
         return seq_x, seq_y
 
