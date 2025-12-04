@@ -102,6 +102,7 @@ class FreDFDataset(Dataset):
                 for col in df.columns
             ]
         )
+        df = df.fill_null(strategy="forward")
         return df.to_numpy().astype(np.float64) # This line right here is where our training pipleine fails because it cannot handle the ND entries.
 
     def _load_ili_data(self, file_path):

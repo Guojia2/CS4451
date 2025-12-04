@@ -3,40 +3,30 @@
 
 ### Here are some issues and notes:
 
-#### main.py:
+#### interpret.py:
+- the masking function does NOT work for the itransformer backbone. Or for the TSMixer backbone.
+- Attention maps work for iTransformer just fine
+- IG does not work for itrasnformer or TSMixer backbones. I think there is some argument parsing issue or issue with setting default values
 #### dataloader.py:
 
 - This thing does NOT handle the "Exchange" dataset currently,because in _load_exchange_data, we get an error from trying to convert 'ND' to a string. THe ND value appears to mean "No data", so a null value. I'm going to try to fix that.
-
+- update Dec 3 2025: Fixed it. Now handles teh nulls and forward-fills them
 #### train/train.py:
 
-- This file does not accept any dataset argumebts except for ETTh1, ETTm1, Exchange, and ILI. I'm not sure if this is intentionally. Perhaps we aren't using datasets besides thhose?
-- update: based on the contents of the dataset_configs dictionary in train.py, it seems we are only using those 4 datsets:
-  -     dataset_configs = {
-          'ETTh1': {'seq_len': 96, 'pred_len': 96, 'features': 7, 'd_ff': 128},
-          'ETTm1': {'seq_len': 96, 'pred_len': 96, 'features': 7, 'd_ff': 128},
-          'Exchange': {'seq_len': 96, 'pred_len': 96, 'features': 2, 'd_ff': 128},
-          'ILI': {'seq_len': 36, 'pred_len': 24, 'features': 10, 'd_ff': 64},
-      }
 ### dataset notes:
 
 ####  Exchange dataset
 - I'm not sure where Calvin got the Exchange dataset he sent me. When I follow the links he sent me and go to https://github.com/laiguokun/multivariate-time-series-data, I end up with a .txt file which is formatted differently and causes our training pipeline to throw an error.
-- Exchange contains some values entered as ND, presumably meaning "no data". I'm unsure if we should delete these rows or impute.
-    - imputation would probably be one of the following:
-      - linear interpolation (assume lienar relationship between prev and future values)
-      - Backward fill (repalce ND value with the value preceeding it)
-      - Forward fill (Replace ND value witht eh value succeeding it)
-    - will have to ask teammates (Calvin, probably) for how to proceed.
-
+- update Dec 3 2025: Calvin says he got a clean version of it from somewhere. Also, I filled nulls with foward fill to make the dataloader handle it
 ####  ETTh1 and ETTm1
 
 - Float32 is definitely insuffcient to maintaint the precision for ETTh1.csv anf for ETTm1. We need to move up to float64, maybe even float128.
+- update: 12/3/2025: made teh changes to float64. Dataloders and model constructors had to be SLIGHTLY modified but that it ok
 #### ILI
 - ILI also may need float64, similar to ETTh1 and ETTm1, I'm not sure. 
 - ILI contains stretches of 0 values. There are entries like National,X,1998,24,0,0,0,0,0,0,0,0,0,0,0. THis surely cannot be correct, right? 
   - Perhaps must consider deleting these entries? I'm not sure if that is allowed for time series data. Further inquiry required.
-
+- update 12/3/2025: made the change to float64. 0 values are being left as-is because not enough time to deal with taht rn
 
 
 
