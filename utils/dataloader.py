@@ -26,7 +26,7 @@ class FreDFDataset(Dataset):
         # load and preprocess dataset
         file_path = os.path.join(root_path, f"{dataset_name}.csv")
         if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Dataset {file_path} not found!")
+            raise FileNotFoundError(f"Dataset {file_path} not found. Please ensure dataset files are located in the correct directory. ")
 
         # dataset-specific loading
         if dataset_name in ['Exchange', 'exchange']:
@@ -43,7 +43,7 @@ class FreDFDataset(Dataset):
         # define split boundaries based on dataset type
         train_end, val_end, test_end = self._get_split_boundaries(dataset_name, len(data))
 
-        # normalize using training set statistics only
+        # normalize using training set stats only
         if normalize:
             train_data = data[:train_end]
             self.scaler = StandardScaler()
@@ -69,7 +69,7 @@ class FreDFDataset(Dataset):
         self.indices = np.arange(num_samples)
 
     def _load_standard_data(self, file_path):
-        # load standard csv (ett, weather, etc)
+        # load standard csv. It's ett.
         full_schema = {
             "date": pl.String,
             "HUFL": pl.Float64,
@@ -96,6 +96,8 @@ class FreDFDataset(Dataset):
         # remove date column (first column)
         df = df.select(cols[1:])
         df = df.collect()
+
+        # remove the ND values and replace them using forward-filling.
         df = df.with_columns(
             [
                 pl.when(pl.col(col) == "ND").then(None).otherwise(pl.col(col)).alias(col)
@@ -103,7 +105,7 @@ class FreDFDataset(Dataset):
             ]
         )
         df = df.fill_null(strategy="forward")
-        return df.to_numpy().astype(np.float64) # This line right here is where our training pipleine fails because it cannot handle the ND entries.
+        return df.to_numpy().astype(np.float64)
 
     def _load_ili_data(self, file_path):
         # load ilinet (influenza-like illness) dataset

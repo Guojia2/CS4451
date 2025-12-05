@@ -23,6 +23,12 @@ run_experiment() {
     local lambda_freq=$4
 
 
+   #i think all of these print statements ended up being too verbose.
+   # I don't want to run my training loop again though, so I think i'll just use grep
+   # to trim down the really long log file that results
+   # in another world, perhaps i would have had the foresight to store these in
+   # a proper tabular format for easy querying.
+
     echo "Running with Dataset=$dataset, Backbone=$backbone, LR=$lr, Lambda_freq=$lambda_freq"
 
     # train the model, outputting results to the log file
@@ -47,4 +53,4 @@ for dataset in "${datasets[@]}"; do
     done
 done
 
-echo "Hyperparameter search completed! Results saved to $log_file."
+echo "Hyperparameter search completed. Results saved to $log_file."
