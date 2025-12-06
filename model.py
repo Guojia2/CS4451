@@ -159,6 +159,7 @@ def build_model(model_name: str, **model_kwargs: Any) -> nn.Module:
     if model_key not in MODEL_REGISTRY:
         raise ValueError(f"Unknown model '{model_name}'. Available: {list(MODEL_REGISTRY)}")
         # i like the ambitiion of writing this code as if we intend to make a very large model registry someday.
+        # we can leave this for future work -AC
 
     model_cls = MODEL_REGISTRY[model_key]
     normalized_kwargs = _normalize_kwargs(model_key, model_kwargs)

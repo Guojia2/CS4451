@@ -96,12 +96,13 @@ class TSMixer(nn.Module):
         self.pred_len = pred_len
         self.enc_in = enc_in
         self.dec_in = dec_in or enc_in
-
         self.mixer_blocks = nn.ModuleList(
             [MixerBlock(seq_len, enc_in, d_ff, dropout) for _ in range(n_blocks)]
         )
         # temporal projection maps lookback window L to forecast horizon T per feature
         self.temporal_projection = nn.Linear(seq_len, pred_len)
+        
+        # need this in order to process the f64 values from some datasets
         self.double()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
