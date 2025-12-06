@@ -36,25 +36,32 @@ class SineMixDataset(Dataset):
 
     def __init__(self, cfg: SynthConfig, seed: int = 0) -> None:
         super().__init__()
+
         self.cfg = cfg
         self.rng = torch.Generator().manual_seed(seed)
 
     def __len__(self) -> int:
         return self.cfg.train_samples
 
+
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         seq_total = self.cfg.seq_len + self.cfg.pred_len
         t = torch.linspace(0, 2 * math.pi, seq_total)
         waves = []
+
         for _ in range(self.cfg.enc_in):
             freq = torch.rand(1, generator=self.rng) * 0.8 + 0.2
             phase = torch.rand(1, generator=self.rng) * 2 * math.pi
             waves.append(torch.sin(freq * t + phase))
+
         series = torch.stack(waves, dim=-1)
         noise = torch.randn_like(series) * 0.05
         series = series + noise
+
         x = series[: self.cfg.seq_len]
         y = series[-self.cfg.pred_len :]
+
+
         return x, y
 
 
@@ -71,6 +78,7 @@ def run_demo(cfg: SynthConfig | None = None) -> None:
         n_blocks=4,
         d_ff=256,
     ).to(device)
+
     optimizer = torch.optim.Adam(model.parameters(), lr=3e-3)
 
     for epoch in range(1, cfg.epochs + 1):

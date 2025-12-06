@@ -115,7 +115,6 @@ def main():
         print("  checkpoint loaded successfully")
     except FileNotFoundError:
         print(f"error: checkpoint not found at {checkpoint_path}")
-        print("  train a model first or specify --checkpoint")
         return
     
     # load test data
@@ -136,7 +135,7 @@ def main():
     # run interpretability
     run_interpretability(model, test_loader, device, args)
     
-    print("\ndone!")
+    print("\n end of report.")
 
 
 if __name__ == "__main__":

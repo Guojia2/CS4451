@@ -20,6 +20,7 @@ class FreDFDataset(Dataset):
         # pred_len: forecast horizon
         # split: train, val, or test
         # normalize: z-score using training stats
+
         self.seq_len = seq_len
         self.pred_len = pred_len
         self.split = split

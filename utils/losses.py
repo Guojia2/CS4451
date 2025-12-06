@@ -17,6 +17,7 @@ def fredf_loss(pred: torch.Tensor, target: torch.Tensor, fourier_weight: float) 
     # 
     # returns:
     #     combined loss: lambda * L_freq + (1 - lambda) * L_temp
+
     assert 0.0 <= fourier_weight <= 1.0, "fourier_weight must be between 0 and 1.0"
     assert pred.shape == target.shape, "Prediction and target shapes must match"
     assert pred.dim() == 3, "Pred and target must be 3D tensors of shape (batches, covariates, forecast_horizon)"
@@ -25,8 +26,10 @@ def fredf_loss(pred: torch.Tensor, target: torch.Tensor, fourier_weight: float) 
     temporal_loss = F.mse_loss(pred, target)
     
     # frequency loss (l1 on fft) - fredf paper eq. 3
+
     pred_fft = torch.fft.rfft(pred, dim=-1)
     target_fft = torch.fft.rfft(target, dim=-1)
+
     freq_loss = torch.mean(torch.abs(pred_fft - target_fft))
     
     # combined loss: λ * L_freq + (1 - λ) * L_temp - fredf paper eq. 4

@@ -153,11 +153,12 @@ def _normalize_kwargs(model_key: str, model_kwargs: Dict[str, Any]) -> Dict[str,
 def build_model(model_name: str, **model_kwargs: Any) -> nn.Module:
 
     if not model_name:
-        raise ValueError("model_name must be a non-empty string")
+        raise ValueError("model_name must be specified ")
 
     model_key = model_name.lower()
     if model_key not in MODEL_REGISTRY:
         raise ValueError(f"Unknown model '{model_name}'. Available: {list(MODEL_REGISTRY)}")
+        # i like the ambitiion of writing this code as if we intend to make a very large model registry someday.
 
     model_cls = MODEL_REGISTRY[model_key]
     normalized_kwargs = _normalize_kwargs(model_key, model_kwargs)

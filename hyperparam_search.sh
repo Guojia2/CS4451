@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Define the hyperparameters to search over
+
 learning_rates=("1e-3" "5e-4" "1e-4")
 lambda_freq_values=(0.00 0.01 0.1 0.8 1.0)  #
 backbones=("itransformer" "tsmixer")  #
@@ -9,7 +9,7 @@ datasets=("ETTh1" "ETTm1" "ILI" "Exchange")
 seq_len=96
 pred_len=96
 
-# Log file
+# Log file name.
 log_file="hyperparam_search_results.log"
 
 # Clear  log file at the start
@@ -42,7 +42,7 @@ run_experiment() {
 
 }
 
-# Loop over all combinations of hyperparameters and datasets
+# Loop over all combinations of hyperparameters and datasets. We are doing exponential time, baby.
 for dataset in "${datasets[@]}"; do
     for backbone in "${backbones[@]}"; do
         for lr in "${learning_rates[@]}"; do

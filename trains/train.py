@@ -15,6 +15,7 @@ from torch import Tensor
 from utils.losses import fredf_loss
 
 
+
 def train_epoch(
     model: FredF,
     dataloader: DataLoader,
@@ -30,13 +31,16 @@ def train_epoch(
         x, y = x.to(device), y.to(device)
         # x shape expected: (batches, covariates, lookback)
         optimizer.zero_grad()
-        pred = model(x)            
+        pred = model(x)
+
         assert pred.shape == y.shape, \
             f"Prediction shape {pred.shape} doesn't match target shape {y.shape}"
+
         loss = loss_fn(pred, y, fourier_weight=fourier_weight)
         loss.backward()
         optimizer.step()
         total_loss += loss.item() * x.size(0)
+
     return total_loss / len(dataloader.dataset)
 
 
@@ -47,9 +51,11 @@ def eval_epoch(
     device: torch.device,
     fourier_weight: float
 ) -> float:
+
     # eval fredf for one epoch
     model.eval()
     total_loss = 0.0
+
     with torch.no_grad():
         for x, y in dataloader:
             x, y = x.to(device), y.to(device)
@@ -58,6 +64,7 @@ def eval_epoch(
                 f"Prediction shape {pred.shape} does not match target shape {y.shape}"
             loss = loss_fn(pred, y, fourier_weight=fourier_weight)
             total_loss += loss.item() * x.size(0)
+
     return total_loss / len(dataloader.dataset)
 
 
@@ -65,6 +72,8 @@ def compute_metrics(model: FredF, dataloader: DataLoader, device: torch.device):
     model.eval()
     total_mse = 0.0
     total_mae = 0.0
+
+
     with torch.no_grad():
         for x, y in dataloader:
             x, y = x.to(device), y.to(device)
@@ -223,8 +232,10 @@ def main() -> None:
     print(f"Test MAE: {test_mae:.4f}")
     
     # print all hyperparameters
+    # sometimes i must question the usefulness of printing hte hyperparameters that we aren't even tuning
+    # thank goodness we are not printing on physical paper. We would run the ink economy dry with how much we are printing.
     print("\n" + "="*50)
-    print("HYPERPARAMETE SUMMARY")
+    print("HYPERPARAMETER SUMMARY")
     print("="*50)
     print(f"Dataset: {args.dataset}")
     print(f"Backbone: {args.backbone}")

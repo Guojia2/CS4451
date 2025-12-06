@@ -96,6 +96,7 @@ class TSMixer(nn.Module):
         self.pred_len = pred_len
         self.enc_in = enc_in
         self.dec_in = dec_in or enc_in
+
         self.mixer_blocks = nn.ModuleList(
             [MixerBlock(seq_len, enc_in, d_ff, dropout) for _ in range(n_blocks)]
         )
