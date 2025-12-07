@@ -79,12 +79,11 @@ def train():
 
         output_attention=True, # whether the model returns self attn weights with preds. returns (predictions, attn_weights) if True and predictions if False
 
-        # note: embed and freq do not change any internal logic, use these
-        # these fields are saved for additional changes later
+        # note: embed and freq do not change any internal logic. These fields are saved for additional changes later if needed.
         embed='fixed',
         freq='h',
 
-        # note: replace this with actual dataset and batch size
+        # TODO: replace this with actual dataset and batch size
         dataset_name='ETTh1',
         root_path='./data/',
         batch_size=32,
@@ -144,7 +143,7 @@ def train():
 
     print(f"{Fore.GREEN}--- Training Complete ---{Style.RESET_ALL}")
 
-    # todo: save the model
+    # TODO: save the model
 
 if __name__ == "__main__":
     train()
