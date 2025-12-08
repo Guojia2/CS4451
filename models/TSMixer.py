@@ -78,7 +78,11 @@ class MixerBlock(nn.Module):
 
 class TSMixer(nn.Module):
     # tsmixer (arXiv:2303.06053) for multivariate forecasting, I/O [B, L, C]
-
+    # input: B = batch size, number of samples passed through the model at once
+    # input: L = lookback or sequence length, number of time steps in the input window
+    # input C = channels or variables, number of input series per time step
+    # output [B, pred_len, C]
+    # pred_len is the number of time steps to predict
     def __init__(
         self,
         seq_len: int,
@@ -106,9 +110,11 @@ class TSMixer(nn.Module):
         self.double()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        
         if x.dim() != 3:
             raise ValueError(f"TSMixer expects 3D input, got shape {x.shape}")
-
+        # added this for flexibility with the axis ordering, we can process tensors of shape [B,L,C] or [B,C,L], for less trouble with the dataloader
+        # after this step, input is guaranteed to be of shape [B,L,C]
         if x.shape[1:] == (self.seq_len, self.enc_in):
             seq_first = True
         elif x.shape[1:] == (self.enc_in, self.seq_len):
